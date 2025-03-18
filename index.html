@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ollama Chat</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background-color: #f0f0f0;
+            border-right: 1px solid #ddd;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            padding-bottom: 16px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 16px;
+        }
+        
+        .sidebar-header h1 {
+            font-size: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+        
+        .sidebar-header h1 svg {
+            margin-right: 8px;
+        }
+        
+        .model-select {
+            margin-bottom: 16px;
+        }
+        
+        .model-select select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            margin-top: 8px;
+        }
+        
+        .model-select label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        
+        .parameters {
+            margin-bottom: 16px;
+        }
+        
+        .parameters h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #555;
+        }
+        
+        .param-group {
+            margin-bottom: 12px;
+        }
+        
+        .param-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        
+        .param-group .range-with-value {
+            display: flex;
+            align-items: center;
+        }
+        
+        .param-group .range-with-value input {
+            flex: 1;
+            margin-right: 8px;
+        }
+        
+        .param-group .value {
+            width: 40px;
+            text-align: right;
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .connection-status {
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        
+        .status-connected {
+            background-color: #4caf50;
+        }
+        
+        .status-disconnected {
+            background-color: #f44336;
+        }
+        
+        .action-button {
+            padding: 8px 12px;
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .action-button:hover {
+            background-color: #444;
+        }
+        
+        /* Main chat area */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+        
+        .message {
+            max-width: 80%;
+            margin-bottom: 24px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .message-user {
+            margin-left: auto;
+            background-color: #10a37f;
+            color: white;
+            border-radius: 12px 12px 0 12px;
+            padding: 12px 16px;
+        }
+        
+        .message-bot {
+            margin-right: auto;
+            background-color: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px 12px 12px 0;
+            padding: 12px 16px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .message p:not(:last-child) {
+            margin-bottom: 10px;
+        }
+        
+        .message pre {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .message code {
+            font-family: 'Courier New', monospace;
+            background-color: rgba(0,0,0,0.05);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        
+        .message-user code {
+            background-color: rgba(255,255,255,0.2);
+        }
+        
+        .input-area {
+            background-color: white;
+            border-top: 1px solid #ddd;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-container {
+            display: flex;
+            position: relative;
+        }
+        
+        .input-container textarea {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            resize: none;
+            min-height: 60px;
+            max-height: 200px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        .input-container textarea:focus {
+            outline: none;
+            border-color: #10a37f;
+            box-shadow: 0 0 0 2px rgba(16,163,127,0.2);
+        }
+        
+        .send-button {
+            position: absolute;
+            right: 12px;
+            bottom: 12px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #10a37f;
+            color: white;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .send-button:hover {
+            background-color: #0d8c6d;
+        }
+        
+        .send-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        /* Utility classes */
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Welcome message and suggestions */
+        .welcome-container {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        
+        .welcome-container h2 {
+            font-size: 24px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        
+        .welcome-container p {
+            color: #555;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        
+        .suggestions {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        .suggestion {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .suggestion:hover {
+            background-color: #f5f5f5;
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            margin-right: auto;
+            background-color: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px 12px 12px 0;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10a37f;
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: typingAnimation 1.4s infinite ease-in-out both;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typingAnimation {
+            0%, 80%, 100% { transform: scale(0.7); }
+            40% { transform: scale(1); }
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+            }
+            
+            .connection-status {
+                margin-top: 16px;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 16v-4M12 8h.01"></path>
+                </svg>
+                Ollama Chat
+            </h1>
+        </div>
+        
+        <div class="model-select">
+            <label for="model">Select Model</label>
+            <select id="model">
+                <option value="">Loading models...</option>
+            </select>
+            <button id="refreshModels" class="action-button" style="width: 100%; margin-top: 8px;">
+                Refresh Models
+            </button>
+        </div>
+        
+        <div class="parameters">
+            <h3>Parameters</h3>
+            <div class="param-group">
+                <label for="temperature">Temperature</label>
+                <div class="range-with-value">
+                    <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7">
+                    <span class="value" id="temperatureValue">0.7</span>
+                </div>
+            </div>
+            
+            <div class="param-group">
+                <label for="maxTokens">Max Tokens</label>
+                <div class="range-with-value">
+                    <input type="range" id="maxTokens" min="64" max="4096" step="64" value="2048">
+                    <span class="value" id="maxTokensValue">2048</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="connection-status">
+            <div>
+                <span class="status-indicator status-disconnected" id="statusIndicator"></span>
+                <span id="statusText">Disconnected</span>
+            </div>
+            <button id="testConnection" class="action-button">Connect</button>
+        </div>
+    </div>
+    
+    <div class="main">
+        <div class="chat-container" id="chatContainer">
+            <div class="welcome-container">
+                <h2>Welcome to Ollama Chat</h2>
+                <p>Select a model from the sidebar and start chatting with your local AI models.</p>
+                
+                <div class="suggestions">
+                    <div class="suggestion" data-text="What is Ollama?">What is Ollama?</div>
+                    <div class="suggestion" data-text="Write a short poem about technology">Write a poem</div>
+                    <div class="suggestion" data-text="Explain quantum computing to a beginner">Explain quantum computing</div>
+                    <div class="suggestion" data-text="Write a Python function to reverse a string">Code example</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-area">
+            <div class="input-container">
+                <textarea id="userInput" placeholder="Type your message..." rows="1"></textarea>
+                <button id="sendButton" class="send-button" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+    
+    <script>
+        // Elements
+        const modelSelect = document.getElementById('model');
+        const refreshModelsButton = document.getElementById('refreshModels');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const chatContainer = document.getElementById('chatContainer');
+        const testConnectionButton = document.getElementById('testConnection');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const notification = document.getElementById('notification');
+        const temperatureSlider = document.getElementById('temperature');
+        const temperatureValue = document.getElementById('temperatureValue');
+        const maxTokensSlider = document.getElementById('maxTokens');
+        const maxTokensValue = document.getElementById('maxTokensValue');
+        
+        // Base API URL
+        let apiUrl = 'http://localhost:11434';
+        
+        // Current selected model
+        let currentModel = '';
+        
+        // State flags
+        let isGenerating = false;
+        
+        // Auto-resize textarea as user types
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            
+            // Enable/disable send button based on input
+            sendButton.disabled = this.value.trim() === '';
+        });
+        
+        // Update slider values
+        temperatureSlider.addEventListener('input', function() {
+            temperatureValue.textContent = this.value;
+        });
+        
+        maxTokensSlider.addEventListener('input', function() {
+            maxTokensValue.textContent = this.value;
+        });
+        
+        // Test connection to Ollama server
+        async function testConnection() {
+            try {
+                statusIndicator.className = 'status-indicator';
+                statusText.textContent = 'Connecting...';
+                testConnectionButton.disabled = true;
+                
+                const response = await fetch(`${apiUrl}/api/tags`);
+                if (response.ok) {
+                    updateConnectionStatus(true);
+                    await fetchModels();
+                    showNotification('Successfully connected to Ollama server');
+                } else {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Connection error:', error);
+                updateConnectionStatus(false);
+                showNotification('Failed to connect to Ollama server. Is it running?', 'error');
+            } finally {
+                testConnectionButton.disabled = false;
+            }
+        }
+        
+        // Update connection status UI
+        function updateConnectionStatus(connected) {
+            if (connected) {
+                statusIndicator.className = 'status-indicator status-connected';
+                statusText.textContent = 'Connected';
+                sendButton.disabled = userInput.value.trim() === '';
+            } else {
+                statusIndicator.className = 'status-indicator status-disconnected';
+                statusText.textContent = 'Disconnected';
+                sendButton.disabled = true;
+                modelSelect.innerHTML = '<option value="">Connect to load models</option>';
+            }
+        }
+        
+        // Fetch available models
+        async function fetchModels() {
+            try {
+                modelSelect.innerHTML = '<option value="">Loading models...</option>';
+                
+                const response = await fetch(`${apiUrl}/api/tags`);
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.models && data.models.length > 0) {
+                    modelSelect.innerHTML = '';
+                    data.models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model.name;
+                        
+                        // Format the size for display
+                        let sizeText = '';
+                        if (model.size < 1024 * 1024) {
+                            sizeText = `(${(model.size / 1024).toFixed(1)} KB)`;
+                        } else if (model.size < 1024 * 1024 * 1024) {
+                            sizeText = `(${(model.size / (1024 * 1024)).toFixed(1)} MB)`;
+                        } else {
+                            sizeText = `(${(model.size / (1024 * 1024 * 1024)).toFixed(1)} GB)`;
+                        }
+                        
+                        option.textContent = `${model.name} ${sizeText}`;
+                        modelSelect.appendChild(option);
+                    });
+                    
+                    // Select the first model by default
+                    if (modelSelect.options.length > 0) {
+                        modelSelect.selectedIndex = 0;
+                        currentModel = modelSelect.value;
+                    }
+                    
+                    showNotification(`Loaded ${data.models.length} models`);
+                } else {
+                    modelSelect.innerHTML = '<option value="">No models available</option>';
+                    showNotification('No models found. Try pulling one with the Ollama CLI', 'error');
+                }
+            } catch (error) {
+                console.error('Error fetching models:', error);
+                modelSelect.innerHTML = '<option value="">Error loading models</option>';
+                showNotification('Failed to load models', 'error');
+            }
+        }
+        
+        // Show a notification
+        function showNotification(message, type = 'info') {
+            notification.textContent = message;
+            notification.className = `notification ${type === 'error' ? 'error' : 'info'} show`;
+            
+            setTimeout(() => {
+                notification.className = 'notification';
+            }, 3000);
+        }
+        
+        // Add a message to the chat
+        function addMessage(content, isUser = false) {
+            // Remove welcome message if it exists
+            const welcomeContainer = document.querySelector('.welcome-container');
+            if (welcomeContainer) {
+                welcomeContainer.remove();
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'message-user' : 'message-bot'}`;
+            
+            // Apply some basic formatting for code blocks
+            let formattedContent = content;
+            
+            // Handle code blocks (```code```)
+            formattedContent = formattedContent.replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
+            
+            // Handle inline code (`code`)
+            formattedContent = formattedContent.replace(/`([^`]+)`/g, '<code>$1</code>');
+            
+            // Handle basic paragraphs
+            formattedContent = formattedContent.split('\n\n').map(p => `<p>${p}</p>`).join('');
+            
+            // For single newlines that aren't already in a paragraph, replace with <br>
+            if (!formattedContent.includes('<p>')) {
+                formattedContent = formattedContent.replace(/\n/g, '<br>');
+                formattedContent = `<p>${formattedContent}</p>`;
+            }
+            
+            messageDiv.innerHTML = formattedContent;
+            chatContainer.appendChild(messageDiv);
+            
+            // Scroll to the bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // Show typing indicator
+        function showTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.className = 'typing-indicator';
+            indicator.id = 'typingIndicator';
+            
+            indicator.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            `;
+            
+            chatContainer.appendChild(indicator);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // Hide typing indicator
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+        
+        // Send a message to the Ollama API
+        async function sendMessage() {
+            const prompt = userInput.value.trim();
+            
+            if (!prompt) return;
+            if (!currentModel) {
+                showNotification('Please select a model first', 'error');
+                return;
+            }
+            
+            try {
+                // Disable UI during generation
+                isGenerating = true;
+                sendButton.disabled = true;
+                sendButton.innerHTML = '<div class="loading"></div>';
+                
+                // Add user message to chat
+                addMessage(prompt, true);
+                
+                // Clear input
+                userInput.value = '';
+                userInput.style.height = 'auto';
+                
+                // Show typing indicator
+                showTypingIndicator();
+                
+                // Prepare request
+                const temperature = parseFloat(temperatureSlider.value);
+                const maxTokens = parseInt(maxTokensSlider.value);
+                
+                const response = await fetch(`${apiUrl}/api/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: currentModel,
+                        prompt: prompt,
+                        stream: true,
+                        options: {
+                            temperature: temperature,
+                            num_predict: maxTokens
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+                
+                // Hide typing indicator
+                hideTypingIndicator();
+                
+                // Process streaming response
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullResponse = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    
+                    if (done) {
+                        break;
+                    }
+                    
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n').filter(line => line.trim() !== '');
+                    
+                    for (const line of lines) {
+                        try {
+                            const data = JSON.parse(line);
+                            if (data.response) {
+                                // This is the first chunk
+                                if (fullResponse === '') {
+                                    addMessage(data.response);
+                                    fullResponse = data.response;
+                                } else {
+                                    // Append to existing message
+                                    fullResponse += data.response;
+                                    
+                                    // Update the message content (the last message in the chat)
+                                    const lastMessage = chatContainer.lastElementChild;
+                                    
+                                    // Apply basic formatting again
+                                    let formattedContent = fullResponse;
+                                    
+                                    // Handle code blocks
+                                    formattedContent = formattedContent.replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
+                                    
+                                    // Handle inline code
+                                    formattedContent = formattedContent.replace(/`([^`]+)`/g, '<code>$1</code>');
+                                    
+                                    // Handle basic paragraphs
+                                    formattedContent = formattedContent.split('\n\n').map(p => `<p>${p}</p>`).join('');
+                                    
+                                    // For single newlines
+                                    if (!formattedContent.includes('<p>')) {
+                                        formattedContent = formattedContent.replace(/\n/g, '<br>');
+                                        formattedContent = `<p>${formattedContent}</p>`;
+                                    }
+                                    
+                                    lastMessage.innerHTML = formattedContent;
+                                }
+                                
+                                // Scroll to bottom as content comes in
+                                chatContainer.scrollTop = chatContainer.scrollHeight;
+                            }
+                            
+                            if (data.done) {
+                                break;
+                            }
+                        } catch (error) {
+                            console.error('Error parsing JSON:', error);
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                hideTypingIndicator();
+                showNotification('Error: ' + error.message, 'error');
+            } finally {
+                isGenerating = false;
+                sendButton.disabled = false;
+                sendButton.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                `;
+            }
+        }
+        
+        // Event listeners
+        modelSelect.addEventListener('change', function() {
+            currentModel = this.value;
+        });
+        
+        refreshModelsButton.addEventListener('click', fetchModels);
+        
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!sendButton.disabled) {
+                    sendMessage();
+                }
+            }
+        });
+        
+        sendButton.addEventListener('click', sendMessage);
+        
+        testConnectionButton.addEventListener('click', testConnection);
+        
+        // Setup suggestion clicks
+        document.querySelectorAll('.suggestion').forEach(suggestion => {
+            suggestion.addEventListener('click', function() {
+                userInput.value = this.dataset.text;
+                userInput.style.height = 'auto';
+                userInput.style.height = (userInput.scrollHeight) + 'px';
+                sendButton.disabled = false;
+                sendMessage();
+            });
+        });
+        
+        // Initialize by testing connection
+        testConnection();
+    </script>
+</body>
+</html>
