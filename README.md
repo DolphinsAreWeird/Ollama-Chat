@@ -28,7 +28,7 @@ The simplest way to use Ollama Chat - just save and open the HTML file:
 
 For a native macOS experience:
 
-1. Download the latest `.dmg` or `.zip` from the [Releases](https://github.com/yourusername/ollama-chat/releases) page
+1. Download the latest `.dmg` or `.zip` from the [Releases](https://github.com/DolphinsAreWeird/Ollama-Chat/releases) page
 2. Open the `.dmg` and drag to your Applications folder (or unzip the `.zip`)
 3. Make sure Ollama is running (`ollama serve` in terminal)
 4. Launch the app from your Applications folder
@@ -44,7 +44,7 @@ For a native macOS experience:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ollama-chat.git
+git clone https://github.com/DolphinsAreWeird/Ollama-Chat.git
 cd ollama-chat
 
 # Install dependencies
