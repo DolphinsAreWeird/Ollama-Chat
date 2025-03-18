@@ -24,7 +24,7 @@ The simplest way to use Ollama Chat - just save and open the HTML file:
 3. Open the HTML file in your web browser
 4. Click "Connect" to connect to your local Ollama server
 
-### Option 2: macOS Application
+### Option 2: macOS Application (This is not working yet)
 
 For a native macOS experience:
 
