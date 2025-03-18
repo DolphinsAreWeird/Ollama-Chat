@@ -1,0 +1,114 @@
+/ renderer/index.html - The main UI
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ollama Chat</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 16v-4M12 8h.01"></path>
+                    </svg>
+                    Ollama Chat
+                </h1>
+            </div>
+            
+            <div class="model-select">
+                <label for="model">Select Model</label>
+                <select id="model">
+                    <option value="">Loading models...</option>
+                </select>
+                <button id="refreshModels" class="action-button">
+                    Refresh Models
+                </button>
+            </div>
+            
+            <div class="parameters">
+                <h3>Parameters</h3>
+                <div class="param-group">
+                    <label for="temperature">Temperature</label>
+                    <div class="range-with-value">
+                        <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7">
+                        <span class="value" id="temperatureValue">0.7</span>
+                    </div>
+                </div>
+                
+                <div class="param-group">
+                    <label for="maxTokens">Max Tokens</label>
+                    <div class="range-with-value">
+                        <input type="range" id="maxTokens" min="64" max="4096" step="64" value="2048">
+                        <span class="value" id="maxTokensValue">2048</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="connection-status">
+                <div>
+                    <span class="status-indicator status-disconnected" id="statusIndicator"></span>
+                    <span id="statusText">Disconnected</span>
+                </div>
+                <button id="testConnection" class="action-button">Connect</button>
+            </div>
+        </div>
+        
+        <div class="main">
+            <div class="titlebar" id="titlebar">
+                <div class="controls">
+                    <button id="clearChat" class="control-button">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"></path>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Clear Chat
+                    </button>
+                    <button id="exportChat" class="control-button">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Export
+                    </button>
+                </div>
+            </div>
+            
+            <div class="chat-container" id="chatContainer">
+                <div class="welcome-container">
+                    <h2>Welcome to Ollama Chat</h2>
+                    <p>Select a model from the sidebar and start chatting with your local AI models.</p>
+                    
+                    <div class="suggestions">
+                        <div class="suggestion" data-text="What is Ollama?">What is Ollama?</div>
+                        <div class="suggestion" data-text="Write a short poem about technology">Write a poem</div>
+                        <div class="suggestion" data-text="Explain quantum computing to a beginner">Explain quantum computing</div>
+                        <div class="suggestion" data-text="Write a Python function to reverse a string">Code example</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <div class="input-container">
+                    <textarea id="userInput" placeholder="Type your message..." rows="1"></textarea>
+                    <button id="sendButton" class="send-button" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+    
+    <script src="renderer.js"></script>
+</body>
+</html>
